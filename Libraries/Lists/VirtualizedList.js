@@ -248,7 +248,6 @@ type OptionalProps = {|
   persistentScrollbar?: ?boolean,
   /**
    * Set this when offset is needed for the loading indicator to show correctly.
-   * @platform android
    */
   progressViewOffset?: number,
   /**
