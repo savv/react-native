@@ -64,67 +64,8 @@ const buildTag = process.env.CIRCLE_TAG;
 const otp = process.env.NPM_CONFIG_OTP;
 
 let branchVersion = 0;
-if (nightlyBuild) {
-  branchVersion = 0;
-} else {
-  if (!buildTag) {
-    echo('Error: We publish only from git tags');
-    exit(1);
-  }
 
-  let match = buildTag.match(/^v(\d+\.\d+)\.\d+(?:-.+)?$/);
-  if (!match) {
-    echo('Error: We publish only from release version git tags');
-    exit(1);
-  }
-  [, branchVersion] = match;
-}
-// 0.33
-
-// 34c034298dc9cad5a4553964a5a324450fda0385
-const currentCommit = exec('git rev-parse HEAD', {silent: true}).stdout.trim();
-// [34c034298dc9cad5a4553964a5a324450fda0385, refs/heads/0.33-stable, refs/tags/latest, refs/tags/v0.33.1, refs/tags/v0.34.1-rc]
-const tagsWithVersion = exec(`git ls-remote origin | grep ${currentCommit}`, {
-  silent: true,
-})
-  .stdout.split(/\s/)
-  // ['refs/tags/v0.33.0', 'refs/tags/v0.33.0-rc', 'refs/tags/v0.33.0-rc1', 'refs/tags/v0.33.0-rc2', 'refs/tags/v0.34.0']
-  .filter(
-    version =>
-      !!version && version.indexOf(`refs/tags/v${branchVersion}`) === 0,
-  )
-  // ['refs/tags/v0.33.0', 'refs/tags/v0.33.0-rc', 'refs/tags/v0.33.0-rc1', 'refs/tags/v0.33.0-rc2']
-  .filter(version => version.indexOf(branchVersion) !== -1)
-  // ['v0.33.0', 'v0.33.0-rc', 'v0.33.0-rc1', 'v0.33.0-rc2']
-  .map(version => version.slice('refs/tags/'.length));
-
-if (!nightlyBuild && tagsWithVersion.length === 0) {
-  echo(
-    'Error: Cannot find version tag in current commit. To deploy to NPM you must add tag v0.XY.Z[-rc] to your commit',
-  );
-  exit(1);
-}
-let releaseVersion;
-
-if (nightlyBuild) {
-  releaseVersion = `0.0.0-${currentCommit.slice(0, 9)}`;
-
-  // Bump version number in various files (package.json, gradle.properties etc)
-  if (
-    exec(`node scripts/bump-oss-version.js --nightly ${releaseVersion}`).code
-  ) {
-    echo('Failed to bump version number');
-    exit(1);
-  }
-} else if (tagsWithVersion[0].indexOf('-rc') === -1) {
-  // if first tag on this commit is non -rc then we are making a stable release
-  // '0.33.0'
-  releaseVersion = tagsWithVersion[0].slice(1);
-} else {
-  // otherwise pick last -rc tag alphabetically
-  // 0.33.0-rc2
-  releaseVersion = tagsWithVersion[tagsWithVersion.length - 1].slice(1);
-}
+let releaseVersion = '0.64.2';
 
 const buildAndroid = (rebuildOnError) => {
   // -------- Generating Android Artifacts with JavaDoc
